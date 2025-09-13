@@ -7,6 +7,7 @@ export default function CreateLotteryPage() {
     descrizione: "",
     data_inizio: "",
     data_fine: "",
+    stato: "aperta",
   });
   const [message, setMessage] = useState("");
 
@@ -20,7 +21,7 @@ export default function CreateLotteryPage() {
       const res = await api.post("/create_lotteria.php", form);
       if (res.data.success) {
         setMessage("✅ Lotteria creata con successo");
-        setForm({ titolo: "", descrizione: "", data_inizio: "", data_fine: "" });
+        setForm({ titolo: "", descrizione: "", data_inizio: "", data_fine: "", stato: "aperta" });
       } else {
         setMessage("⚠️ " + res.data.message);
       }
@@ -77,6 +78,20 @@ export default function CreateLotteryPage() {
             onChange={handleChange}
             required
           />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Stato *</label>
+          <select
+            className="form-select"
+            name="stato"
+            value={form.stato}
+            onChange={handleChange}
+            required
+          >
+            <option value="aperta">Aperta</option>
+            <option value="chiusa">Chiusa</option>
+          </select>
         </div>
 
         <button type="submit" className="btn btn-success">Crea</button>

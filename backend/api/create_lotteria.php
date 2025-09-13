@@ -15,6 +15,7 @@ try {
   $descrizione = trim($data['descrizione'] ?? '');
   $data_inizio = trim($data['data_inizio'] ?? '');
   $data_fine = trim($data['data_fine'] ?? '');
+  $stato = trim($data['stato'] ?? 'aperta');
 
   if (!$titolo || !$data_inizio || !$data_fine) {
     echo json_encode(['success' => false, 'message' => 'Titolo, data inizio e data fine sono obbligatori']);
@@ -22,10 +23,10 @@ try {
   }
 
   $stmt = $pdo->prepare("
-        INSERT INTO lotterie (titolo, descrizione, data_inizio, data_fine) 
-        VALUES (?, ?, ?, ?)
+        INSERT INTO lotterie (titolo, descrizione, data_inizio, data_fine, stato) 
+        VALUES (?, ?, ?, ?, ?)
     ");
-  $stmt->execute([$titolo, $descrizione, $data_inizio, $data_fine]);
+  $stmt->execute([$titolo, $descrizione, $data_inizio, $data_fine, $stato]);
 
   echo json_encode(['success' => true]);
 } catch (Exception $e) {

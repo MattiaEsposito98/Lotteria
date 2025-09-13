@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
+
 export default function ListUsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);

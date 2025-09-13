@@ -1,28 +1,40 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 
-// Pagine
-import CreateLotteryPage from "./pages/CreateLotteryPage";
-import ListLotteryPage from "./pages/ListLotteryPage";
+// Pagine utenti
 import CreateUserPage from "./pages/CreateUserPage";
 import ListUsersPage from "./pages/ListUsersPage";
+
+// Pagine lotterie
+import CreateLotteryPage from "./pages/CreateLotteryPage";
+import ListLotteryPage from "./pages/ListLotteryPage";
+
+// Dettagli biglietti
+import LotteryDetailPage from "./pages/LotteryDetailPage";
+
+// Login/logout
+import LoginPage from "./pages/LoginPage";
 
 export default function App() {
   return (
     <Router>
-      <div className="d-flex flex-column min-vh-100">
-        <Navbar />
-        <main className="container my-4 flex-grow-1">
-          <Routes>
-            <Route path="/create-lottery" element={<CreateLotteryPage />} />
-            <Route path="/list-lottery" element={<ListLotteryPage />} />
-            <Route path="/create-user" element={<CreateUserPage />} />
-            <Route path="/list-users" element={<ListUsersPage />} />
-            <Route path="/" element={<h2>Benvenuto nel pannello admin</h2>} />
-          </Routes>
-        </main>
-        <Footer />
+      <Navbar />
+      <div className="container mt-4">
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+
+          {/* Utenti */}
+          <Route path="/users" element={<ListUsersPage />} />
+          <Route path="/users/create" element={<CreateUserPage />} />
+
+          {/* Lotterie */}
+          <Route path="/lotteries" element={<ListLotteryPage />} />
+          <Route path="/lotteries/create" element={<CreateLotteryPage />} />
+          <Route path="/lotteries/:id" element={<LotteryDetailPage />} />
+
+          {/* Logout → semplice redirect */}
+          <Route path="/logout" element={<LoginPage />} />
+        </Routes>
       </div>
     </Router>
   );

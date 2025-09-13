@@ -4,7 +4,8 @@ export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
       <div className="container-fluid">
-        <Link className="navbar-brand" to="/">Lotteria Admin</Link>
+        <Link className="navbar-brand" to="/users">Lotteria Admin</Link>
+
         <button
           className="navbar-toggler"
           type="button"
@@ -15,41 +16,61 @@ export default function Navbar() {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarNav">
-          <ul className="navbar-nav ms-auto">
-            {/* Lotteria dropdown */}
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle"
-                href="#"
-                id="lotteryDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                Lotteria
-              </a>
-              <ul className="dropdown-menu" aria-labelledby="lotteryDropdown">
-                <li><Link className="dropdown-item" to="/create-lottery">Crea lotteria</Link></li>
-                <li><Link className="dropdown-item" to="/list-lottery">Lista lotterie</Link></li>
-              </ul>
-            </li>
+          <ul className="navbar-nav me-auto">
 
-            {/* Utenti dropdown */}
+            {/* Utenti */}
             <li className="nav-item dropdown">
               <a
                 className="nav-link dropdown-toggle"
                 href="#"
-                id="usersDropdown"
                 role="button"
                 data-bs-toggle="dropdown"
-                aria-expanded="false"
               >
                 Utenti
               </a>
-              <ul className="dropdown-menu" aria-labelledby="usersDropdown">
-                <li><Link className="dropdown-item" to="/create-user">Aggiungi utente</Link></li>
-                <li><Link className="dropdown-item" to="/list-users">Lista utenti</Link></li>
+              <ul className="dropdown-menu">
+                <li>
+                  <Link className="dropdown-item" to="/users/create">
+                    Aggiungi Utente
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/users">
+                    Lista Utenti
+                  </Link>
+                </li>
               </ul>
+            </li>
+
+            {/* Lotterie */}
+            <li className="nav-item dropdown">
+              <a
+                className="nav-link dropdown-toggle"
+                href="#"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                Lotterie
+              </a>
+              <ul className="dropdown-menu">
+                <li>
+                  <Link className="dropdown-item" to="/lotteries/create">
+                    Crea Lotteria
+                  </Link>
+                </li>
+                <li>
+                  <Link className="dropdown-item" to="/lotteries">
+                    Lista Lotterie
+                  </Link>
+                </li>
+              </ul>
+            </li>
+          </ul>
+
+          {/* Logout */}
+          <ul className="navbar-nav">
+            <li className="nav-item">
+              <Link className="nav-link" to="/logout">Logout</Link>
             </li>
           </ul>
         </div>
