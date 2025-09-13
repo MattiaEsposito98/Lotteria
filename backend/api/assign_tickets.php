@@ -20,7 +20,7 @@ try {
   }
 
   // Genera codice univoco
-  $codice = strtoupper("LOT{$id_lotteria}-U{$id_utente}-" . substr(md5(uniqid()), 0, 6));
+  $codice = strtoupper("LOT{$id_lotteria}-U{$id_utente}-" . substr(md5(uniqid()), 0, 9));
 
   $stmt = $pdo->prepare("INSERT INTO biglietti (id_lotteria, id_utente, codice) VALUES (?, ?, ?)");
   $stmt->execute([$id_lotteria, $id_utente, $codice]);
