@@ -6,6 +6,7 @@ export default function ListLotteryPage() {
   const [lotteries, setLotteries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null); // 👈 ID della lotteria in editing
 
   // Carica tutte le lotterie
   const loadLotteries = async () => {
@@ -30,6 +31,7 @@ export default function ListLotteryPage() {
         id,
         stato: newStatus,
       });
+
       if (res.data.success) {
         setLotteries((prev) =>
           prev.map((l) => (l.id === id ? { ...l, stato: newStatus } : l))
@@ -38,6 +40,7 @@ export default function ListLotteryPage() {
         alert("Errore: " + res.data.message);
       }
     } catch (err) {
+      console.error("Errore updateStatus:", err);
       alert("❌ Errore server");
     }
   };
@@ -81,15 +84,30 @@ export default function ListLotteryPage() {
                   <td>{l.data_inizio}</td>
                   <td>{l.data_fine}</td>
                   <td>
-                    <select
-                      className={`form-select form-select-sm ${l.stato === "aperta" ? "text-success" : "text-danger"
-                        }`}
-                      value={l.stato}
-                      onChange={(e) => updateStatus(l.id, e.target.value)}
-                    >
-                      <option value="aperta">Aperta</option>
-                      <option value="chiusa">Chiusa</option>
-                    </select>
+                    {editingId === l.id ? (
+                      <select
+                        className="form-select form-select-sm"
+                        value={l.stato}
+                        onChange={(e) => {
+                          updateStatus(l.id, e.target.value);
+                          setEditingId(null); // torna al badge dopo la scelta
+                        }}
+                        onBlur={() => setEditingId(null)} // clic fuori → badge
+                        autoFocus
+                      >
+                        <option value="aperta">Aperta</option>
+                        <option value="chiusa">Chiusa</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={`badge ${l.stato === "aperta" ? "bg-success" : "bg-danger"
+                          }`}
+                        style={{ cursor: "pointer" }}
+                        onClick={() => setEditingId(l.id)}
+                      >
+                        {l.stato === "aperta" ? "Aperta" : "Chiusa"}
+                      </span>
+                    )}
                   </td>
                   <td>{l.created_at}</td>
                   <td>
