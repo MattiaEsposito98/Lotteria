@@ -17,18 +17,43 @@ try {
   $cellulare = trim($data['cellulare'] ?? '');
   $data_nascita = trim($data['data_nascita'] ?? null);
 
-  if (!$nome || !$cognome) {
-    echo json_encode(['success' => false, 'message' => 'Nome e cognome sono obbligatori']);
+  // ✅ Controlli di base
+  if (!$nome || !$cognome || !$data_nascita) {
+    echo json_encode([
+      'success' => false,
+      'message' => 'Nome, cognome e data di nascita sono obbligatori'
+    ]);
     exit;
   }
 
-  $stmt = $pdo->prepare("
-        INSERT INTO users (nome, cognome, email, cellulare, data_nascita, ruolo) 
-        VALUES (?, ?, ?, ?, ?, 'user')
-    ");
-  $stmt->execute([$nome, $cognome, $email ?: null, $cellulare ?: null, $data_nascita ?: null]);
+  // ✅ Controllo età minima 18 anni
+  $oggi = new DateTime();
+  $dob = DateTime::createFromFormat('Y-m-d', $data_nascita);
+  if (!$dob) {
+    echo json_encode(['success' => false, 'message' => 'Formato data non valido']);
+    exit;
+  }
 
-  echo json_encode(['success' => true]);
+  $diff = $oggi->diff($dob)->y; // differenza in anni
+  if ($diff < 18) {
+    echo json_encode(['success' => false, 'message' => 'L\'utente deve avere almeno 18 anni']);
+    exit;
+  }
+
+  // ✅ Inserisci utente
+  $stmt = $pdo->prepare("
+      INSERT INTO users (nome, cognome, email, cellulare, data_nascita, ruolo) 
+      VALUES (?, ?, ?, ?, ?, 'user')
+  ");
+  $stmt->execute([
+    $nome,
+    $cognome,
+    $email ?: null,
+    $cellulare ?: null,
+    $data_nascita
+  ]);
+
+  echo json_encode(['success' => true, 'message' => 'Utente creato con successo']);
 } catch (Exception $e) {
   http_response_code(500);
   echo json_encode(['success' => false, 'message' => $e->getMessage()]);

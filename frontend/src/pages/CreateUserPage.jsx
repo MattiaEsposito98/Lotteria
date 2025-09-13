@@ -5,9 +5,9 @@ export default function CreateUserPage() {
   const [form, setForm] = useState({
     nome: "",
     cognome: "",
+    data_nascita: "",
     email: "",
     cellulare: "",
-    data_nascita: "",
   });
   const [message, setMessage] = useState("");
 
@@ -17,11 +17,32 @@ export default function CreateUserPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Controllo lato client: almeno 18 anni
+    const birthDate = new Date(form.data_nascita);
+    const today = new Date();
+    const minDate = new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate()
+    );
+
+    if (birthDate > minDate) {
+      setMessage("⚠️ L'utente deve avere almeno 18 anni");
+      return;
+    }
+
     try {
       const res = await api.post("/create_user.php", form);
       if (res.data.success) {
         setMessage("✅ Utente creato con successo");
-        setForm({ nome: "", cognome: "", email: "", cellulare: "", data_nascita: "" });
+        setForm({
+          nome: "",
+          cognome: "",
+          data_nascita: "",
+          email: "",
+          cellulare: "",
+        });
       } else {
         setMessage("⚠️ " + res.data.message);
       }
@@ -29,6 +50,16 @@ export default function CreateUserPage() {
       setMessage("❌ Errore nel server");
     }
   };
+
+  // Calcola la data massima (oggi - 18 anni) per l'input date
+  const today = new Date();
+  const maxDate = new Date(
+    today.getFullYear() - 18,
+    today.getMonth(),
+    today.getDate()
+  )
+    .toISOString()
+    .split("T")[0];
 
   return (
     <div className="container">
@@ -59,6 +90,19 @@ export default function CreateUserPage() {
         </div>
 
         <div className="mb-3">
+          <label className="form-label">Data di nascita *</label>
+          <input
+            type="date"
+            className="form-control"
+            name="data_nascita"
+            value={form.data_nascita}
+            onChange={handleChange}
+            required
+            max={maxDate}
+          />
+        </div>
+
+        <div className="mb-3">
           <label className="form-label">Email</label>
           <input
             type="email"
@@ -80,18 +124,9 @@ export default function CreateUserPage() {
           />
         </div>
 
-        <div className="mb-3">
-          <label className="form-label">Data di nascita</label>
-          <input
-            type="date"
-            className="form-control"
-            name="data_nascita"
-            value={form.data_nascita}
-            onChange={handleChange}
-          />
-        </div>
-
-        <button type="submit" className="btn btn-primary">Salva</button>
+        <button type="submit" className="btn btn-primary">
+          Salva
+        </button>
       </form>
 
       {message && <div className="alert alert-info mt-3">{message}</div>}
