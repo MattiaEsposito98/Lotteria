@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Generatore Biglietti (ZIP)</title>
+
+<!-- FONT -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+<style>
+body { font-family: Arial; padding:30px; }
+.box { margin-bottom:20px; padding:20px; border:1px solid #ccc; border-radius:10px; }
+button { padding:10px 20px; font-size:16px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<h2>Generatore Biglietti 🎄 (ZIP)</h2>
+<p>Carica immagine base e file Excel. Verrà scaricato un unico ZIP.</p>
+
+<div class="box">
+    <b>1. Immagine base</b><br>
+    <input type="file" id="baseFile" accept="image/png, image/jpeg">
+</div>
+
+<div class="box">
+    <b>2. File Excel (.xlsx)</b><br>
+    <input type="file" id="excelFile" accept=".xlsx">
+</div>
+
+<div class="box">
+    <b>Colore testo</b><br>
+    <input type="color" id="colorText" value="#960000">
+</div>
+
+<button onclick="processExcel()">Genera ZIP</button>
+
+<!-- LIBRERIE -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script>
+async function processExcel() {
+    try {
+        const baseFile = document.getElementById("baseFile").files[0];
+        const excelFile = document.getElementById("excelFile").files[0];
+        const colorText = document.getElementById("colorText").value;
+
+        if (!baseFile || !excelFile) {
+            alert("Carica immagine ed Excel");
+            return;
+        }
+
+        const data = await excelFile.arrayBuffer();
+        const workbook = XLSX.read(data);
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        const entries = rows
+            .map(r => ({
+                name: r[0] ? String(r[0]).trim() : "",
+                tickets: r[1] ? String(r[1]).trim() : ""
+            }))
+            .filter(e => e.name !== "");
+
+        if (!entries.length) {
+            alert("Excel vuoto");
+            return;
+        }
+
+        const baseImage = await loadImage(baseFile);
+        await document.fonts.ready;
+
+        const zip = new JSZip();
+
+        for (let e of entries) {
+            const blob = await generateTicketBlob(baseImage, e.name, e.tickets, colorText);
+            const filename = e.name.replace(/[^a-zA-Z0-9_-]/g, "_") + ".png";
+            zip.file(filename, blob);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        saveAs(zipBlob, "biglietti.zip");
+
+        alert("ZIP generato con successo!");
+    } catch (err) {
+        console.error(err);
+        alert("Errore: guarda la console (F12)");
+    }
+}
+
+
+function loadImage(file) {
+    return new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+
+function generateTicketBlob(baseImg, name, tickets, colorText) {
+    return new Promise(resolve => {
+        const canvas = document.createElement("canvas");
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(baseImg, 0, 0);
+
+        // Nome
+        ctx.fillStyle = colorText;
+        ctx.font = "60px 'Montserrat'";
+        ctx.textAlign = "center";
+        ctx.fillText(name, canvas.width / 2, 920);
+
+        // Biglietti
+        ctx.font = "55px 'Montserrat'";
+        ctx.textAlign = "left";
+        ctx.fillText(tickets, 810, 1060);
+
+        // ✅ METODO AFFIDABILE
+        const dataURL = canvas.toDataURL("image/png");
+        const blob = dataURLToBlob(dataURL);
+        resolve(blob);
+    });
+}
+
+function dataURLToBlob(dataURL) {
+    const parts = dataURL.split(',');
+    const mime = parts[0].match(/:(.*?);/)[1];
+    const binary = atob(parts[1]);
+    const array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        array[i] = binary.charCodeAt(i);
+    }
+    return new Blob([array], { type: mime });
+}
+
+</script>
+
+</body>
+</html>

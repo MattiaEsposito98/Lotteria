@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Instagram Follower Checker</title>
+<style>
+body { font-family: Arial; padding:30px; }
+.box { margin-bottom:20px; padding:20px; border:1px solid #ccc; border-radius:10px; }
+button { padding:10px 20px; font-size:16px; cursor:pointer; }
+textarea { width:100%; height:120px; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h2>Instagram Followers Checker</h2>
+<p>Carica <b>followers_1.html</b> e <b>following.html</b> → Genererò un file Excel con le persone che TU segui ma loro NON seguono te (con eccezioni personalizzate).</p>
+
+<div class="box">
+    <label><b>1. Carica followers_1.html</b> (Persone che mi seguono)</label><br>
+    <input type="file" id="followersFile">
+</div>
+
+<div class="box">
+    <label><b>2. Carica following.html</b> (Persone che io seguo)</label><br>
+    <input type="file" id="followingFile">
+</div>
+
+<div class="box">
+    <label><b>3. Username da escludere dalla lista (uno per riga):</b></label><br>
+    <textarea id="exceptions" placeholder="esempio:
+cr7
+@luca
+milanofficial
+@pagina_che_mi_interessa"></textarea>
+</div>
+
+<button onclick="processFiles()">Genera File Excel</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+
+// --- Normalizzazione avanzata username ---
+function normalizeUsername(u) {
+    if (!u) return "";
+    return u
+        .normalize("NFKC")                    // normalizza Unicode
+        .replace(/[\u2017\uFF3F]/g, "_")      // underscore strani → _
+        .replace(/@/g, "")                    // rimuove @
+        .replace(/\?/g, "")                   // rimuove ?
+        .trim()
+        .toLowerCase();
+}
+
+// ---- Estrazione username da HTML ----
+function extractUsernamesFromHTML(text) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, "text/html");
+
+    let users = [];
+
+    doc.querySelectorAll("a").forEach(a => {
+        const url = a.getAttribute("href");
+        if (!url) return;
+
+        const parts = url.split("/");
+        let user = parts[parts.length - 1].trim();
+
+        user = normalizeUsername(user);
+
+        if (user.match(/^[a-z0-9._]+$/)) {
+            users.push(user);
+        }
+    });
+
+    return [...new Set(users)];
+}
+
+async function processFiles() {
+    const followersFile = document.getElementById("followersFile").files[0];
+    const followingFile = document.getElementById("followingFile").files[0];
+
+    if (!followersFile || !followingFile) {
+        alert("Carica entrambi i file.");
+        return;
+    }
+
+    const followersText = await followersFile.text();
+    const followingText = await followingFile.text();
+
+    // Normalizzazione completa
+    const followers = extractUsernamesFromHTML(followersText).map(normalizeUsername);
+    const following = extractUsernamesFromHTML(followingText).map(normalizeUsername);
+
+    // ---- ECCEZIONI ----
+    const exceptionsText = document.getElementById("exceptions").value
+        .split("\n")
+        .map(x => normalizeUsername(x))
+        .filter(x => x.match(/^[a-z0-9._]+$/));
+
+    // utenti che TU segui ma NON ti seguono indietro
+    let notFollowingBack = following.filter(user => !followers.includes(user));
+
+    // rimuovi eccezioni
+    notFollowingBack = notFollowingBack.filter(user => !exceptionsText.includes(user));
+
+    // ordina alfabeticamente
+    notFollowingBack.sort();
+
+    // Genera Excel
+    const worksheet = XLSX.utils.json_to_sheet(
+        notFollowingBack.map(u => ({ "Non Ricambiato": u }))
+    );
+
+    // LARGHEZZA COLONNA A
+    worksheet['!cols'] = [
+        { wch: 40 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Non Ricambiati");
+
+    XLSX.writeFile(workbook, "non_ricambiati.xlsx");
+
+    alert("File generato con successo!");
+}
+
+</script>
+
+</body>
+</html>

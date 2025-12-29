@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Generatore Biglietti (Client-side)</title>
+
+<!-- IMPORTA IL FONT CORRETTO (obbligatorio per Canvas) -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+<style>
+body { font-family: Arial; padding:30px; }
+.box { margin-bottom:20px; padding:20px; border:1px solid #ccc; border-radius:10px; }
+button { padding:10px 20px; font-size:16px; cursor:pointer; }
+.color-box { margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h2>Generatore Biglietti 🎄</h2>
+<p>Carica immagine base e lista nomi (Excel). Ogni nome verrà scritto dentro al biglietto.</p>
+
+<!-- IMG -->
+<div class="box">
+    <label><b>1. Carica immagine base (PNG o JPEG):</b></label><br>
+    <input type="file" id="baseFile" accept="image/png, image/jpeg" required>
+</div>
+
+<!-- EXCEL -->
+<div class="box">
+    <label><b>2. Carica file Excel (.xlsx):</b></label><br>
+    <input type="file" id="excelFile" accept=".xlsx" required>
+</div>
+
+<!-- UNICO COLOR PICKER -->
+<div class="box">
+    <label><b>Colore Testo (Nome + Biglietti Ottenuti):</b></label><br>
+    <input type="color" id="colorText" value="#960000">
+    <span id="colorTextHex">#960000</span>
+</div>
+
+<button onclick="processExcel()">Genera Biglietti</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+// 🔄 Aggiorna HEX visivo
+document.getElementById("colorText").addEventListener("input", function () {
+    document.getElementById("colorTextHex").innerText = this.value;
+});
+
+async function processExcel() {
+    const baseFile = document.getElementById("baseFile").files[0];
+    const excelFile = document.getElementById("excelFile").files[0];
+
+    if (!baseFile || !excelFile) {
+        alert("Devi caricare immagine e file Excel.");
+        return;
+    }
+
+    // Leggi Excel
+    const data = await excelFile.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+    // Col A = nome | Col B = biglietti
+    const entries = rows
+        .map(r => ({
+            name: r[0] ? String(r[0]).trim() : "",
+            tickets: r[1] ? String(r[1]).trim() : ""
+        }))
+        .filter(e => e.name !== "");
+
+    if (entries.length === 0) {
+        alert("Il file Excel non contiene nomi validi.");
+        return;
+    }
+
+    const baseImage = await loadImage(baseFile);
+
+    alert("Generazione biglietti in corso...");
+    await document.fonts.ready;
+
+    // Leggi colore scelto (unico)
+    const colorText = document.getElementById("colorText").value;
+
+    // Genera biglietti
+    for (let e of entries) {
+        await generateTicket(baseImage, e.name, e.tickets, colorText);
+    }
+
+    alert("Biglietti generati!");
+}
+
+function loadImage(file) {
+    return new Promise(resolve => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+function generateTicket(baseImg, name, tickets, colorText) {
+    return new Promise(resolve => {
+        const canvas = document.createElement("canvas");
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(baseImg, 0, 0);
+
+        // --------------------------
+        //  TESTO NOME
+        // --------------------------
+        ctx.fillStyle = colorText;
+        ctx.font = "60px 'Montserrat'";
+        ctx.textAlign = "center";
+
+        const xCenter = canvas.width / 2;
+        const yName = 920;
+        ctx.fillText(name, xCenter, yName);
+
+        // --------------------------
+        //  TESTO NUMERO BIGLIETTI
+        // --------------------------
+        ctx.fillStyle = colorText;
+        ctx.font = "55px 'Montserrat'";
+        ctx.textAlign = "left";
+
+        const xTickets = 810;
+        const yTickets = 1060;
+
+        ctx.fillText(tickets, xTickets, yTickets);
+
+        // --------------------------
+        // DOWNLOAD FILE
+        const link = document.createElement("a");
+        link.download = name.replace(/[^a-zA-Z0-9_-]/g, "_") + ".png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+
+        resolve();
+    });
+}
+</script>
+
+</body>
+</html>

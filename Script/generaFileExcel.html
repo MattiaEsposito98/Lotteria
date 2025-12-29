@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Generatore Excel Nomi</title>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 30px;
+}
+.box {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+input {
+    padding: 8px;
+    font-size: 16px;
+    margin-right: 10px;
+}
+button {
+    padding: 10px 18px;
+    font-size: 16px;
+    cursor: pointer;
+}
+ul {
+    margin-top: 15px;
+}
+li {
+    margin-bottom: 5px;
+}
+</style>
+</head>
+<body>
+
+<h2>Generatore Excel Nomi 📄</h2>
+<p>Inserisci nome e quantità. Verranno espansi automaticamente nel file Excel.</p>
+
+<div class="box">
+    <input type="text" id="nameInput" placeholder="Nome">
+    <input type="number" id="countInput" placeholder="Numero" min="1">
+    <button onclick="addEntry()">Aggiungi</button>
+</div>
+
+<div class="box">
+    <b>Anteprima lista:</b>
+    <ul id="previewList"></ul>
+</div>
+
+<button onclick="generateExcel()">Genera Excel</button>
+
+<!-- XLSX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+const finalNames = [];
+
+function addEntry() {
+    const name = document.getElementById("nameInput").value.trim();
+    const count = parseInt(document.getElementById("countInput").value);
+
+    if (!name || !count || count <= 0) {
+        alert("Inserisci nome valido e numero > 0");
+        return;
+    }
+
+    for (let i = 0; i < count; i++) {
+        finalNames.push(name.toUpperCase());
+    }
+
+    updatePreview();
+
+    document.getElementById("nameInput").value = "";
+    document.getElementById("countInput").value = "";
+    document.getElementById("nameInput").focus();
+}
+
+function updatePreview() {
+    const ul = document.getElementById("previewList");
+    ul.innerHTML = "";
+
+    finalNames.forEach((n, i) => {
+        const li = document.createElement("li");
+        li.textContent = `${i + 1}. ${n}`;
+        ul.appendChild(li);
+    });
+}
+
+function generateExcel() {
+    if (finalNames.length === 0) {
+        alert("Nessun nome inserito");
+        return;
+    }
+
+    const worksheetData = finalNames.map(n => [n]);
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Nomi");
+
+    XLSX.writeFile(workbook, "nomi_generati.xlsx");
+}
+</script>
+
+</body>
+</html>
