@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Generatore Excel da Excel</title>
+
+<style>
+body {
+    font-family: Arial;
+    padding: 30px;
+}
+.box {
+    border: 1px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+button {
+    padding: 10px 18px;
+    font-size: 16px;
+    cursor: pointer;
+}
+ul {
+    margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<h2>Generatore Excel da Excel 📄</h2>
+<p>Carica un file Excel con <b>Nome</b> in colonna A e <b>Numero</b> in colonna B.</p>
+
+<div class="box">
+    <input type="file" id="excelInput" accept=".xlsx,.xls">
+</div>
+
+<div class="box">
+    <b>Anteprima risultato:</b>
+    <ul id="previewList"></ul>
+</div>
+
+<button onclick="generateExcel()">Genera nuovo Excel</button>
+
+<!-- XLSX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+let finalNames = [];
+
+document.getElementById("excelInput").addEventListener("change", handleFile);
+
+function handleFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+        finalNames = [];
+
+        rows.forEach(row => {
+            const name = row[0];
+            const count = parseInt(row[1]);
+
+            if (name && count > 0) {
+                for (let i = 0; i < count; i++) {
+                    finalNames.push(name.toUpperCase());
+                }
+            }
+        });
+
+        updatePreview();
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
+function updatePreview() {
+    const ul = document.getElementById("previewList");
+    ul.innerHTML = "";
+
+    finalNames.forEach((name, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${index + 1}. ${name}`;
+        ul.appendChild(li);
+    });
+}
+
+function generateExcel() {
+    if (finalNames.length === 0) {
+        alert("Nessun dato da esportare");
+        return;
+    }
+
+    const worksheetData = finalNames.map(n => [n]);
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Risultato");
+    XLSX.writeFile(workbook, "nomi_espansi.xlsx");
+}
+</script>
+
+</body>
+</html>
